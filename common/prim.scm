@@ -3,8 +3,8 @@
 (use srfi-69)
 (use srfi-1)
 
-(include "disjoint-set")
-(include "list-util")
+(include "common/disjoint-set")
+(include "common/list-util")
 
 ; Check of tree of a contains b
 ; Check if both tree roots are the same

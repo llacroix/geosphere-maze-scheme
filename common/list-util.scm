@@ -1,5 +1,5 @@
 ; Code depend on the disjoin set
-(include "disjoint-set")
+(include "common/disjoint-set")
 
 ; Sort edges in increasing order
 ; the first element of each edges should be the 

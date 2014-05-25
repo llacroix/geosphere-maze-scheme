@@ -1,8 +1,8 @@
 (use srfi-69)
 
-(include "base")
-(include "prim")
-(include "kruskal")
+(include "common/base")
+(include "common/prim")
+(include "common/kruskal")
 
 
 (define (for-eachi func lst)
@@ -39,7 +39,7 @@
     (list edges sedges)
     )
 
-(time 
+#;(time 
 
 (let* ((geo (tessellate (make-geometry 1) 0))
        (vertices (car geo))

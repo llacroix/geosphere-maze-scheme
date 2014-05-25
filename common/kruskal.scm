@@ -2,8 +2,8 @@
 (use extras)
 (use srfi-69)
 
-(include "disjoint-set")
-(include "list-util")
+(include "common/disjoint-set")
+(include "common/list-util")
 
 ; Kruskal algorithm is done here
 (define (kruskal nodes edges)

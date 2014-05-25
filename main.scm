@@ -1,5 +1,6 @@
 (require-extension gl glu glut)
 (require-extension srfi-19-core)
+(include "common/t")
 
 
 (define folder (if (equal? (command-line-arguments) '())

@@ -21,47 +21,82 @@
 
   (InitResources))
 
-(define offset 0)
 (define all_coords (f32vector 0))
 (define cube_elements (u16vector 0))
 
 (define vbo_all -1)
 (define ibo_cube_elements -1)
+(define ibo_maze_elements -1)
 
 (define attribute_vcoord -1)
 (define attribute_vnormal -1)
 (define uniform_mvp -1)
 (define uniform_inv_transp -1)
+(define geosphere 0)
+
+(define (register_sphere tessellation)
+  (let* ((geo (tessellate (make-geometry 1) tessellation))
+         (verts (list->f32vector (concatenate (map f32vector->list (car geo)))))
+         (faces (list->u16vector (concatenate (cadr geo))))
+         )
+
+      (set! geosphere geo)
+      ; Load vbos
+      (set! vbo_all (CreateVBO32 gl:ARRAY_BUFFER gl:STATIC_DRAW verts))
+      (set! ibo_cube_elements (CreateVBO16 gl:ELEMENT_ARRAY_BUFFER gl:STATIC_DRAW faces))
+  ))
+
+(define (generate_maze obj)
+  (let* ((geo obj)
+         (vertices (car geo))
+         (forest (getEdges (cadr geo)))
+         (backup (car forest))
+         (edges (cadr forest))
+         (size (length edges))
+         (m-edges (map (lambda (x) (cons (random size) x)) edges))
+         (nodes (get-nodes m-edges))
+         (path (kruskal nodes m-edges))
+         (filtered-path (map (lambda (x) (cdr x)) path))
+         (maze (subtract edges filtered-path))
+         (base (map (lambda (maze-edge) (hash-table-ref backup maze-edge)) maze))
+         (faces (list->u16vector (concatenate base))))
+
+    (print "Edges : " (length edges))
+    (print "Maze : "  (length maze))
+    (print "Maze 2 " (concatenate maze))
+
+    (set! ibo_maze_elements (CreateVBO16 gl:ELEMENT_ARRAY_BUFFER gl:STATIC_DRAW faces))
+    ))
+
+
 
 (define (InitResources)
   (gl:Enable gl:BLEND)
   (gl:Enable gl:DEPTH_TEST)
   (gl:BlendFunc gl:SRC_ALPHA gl:ONE_MINUS_SRC_ALPHA)
   (gl:Disable gl:CULL_FACE)
+  (gl:LineWidth 2)
 
-  (define obj (call-with-input-file "geo/suzanne.obj" load-obj))
-
-  (print obj)
-
-  (define vertices_a (list->f32vector (list-ref obj 1)))
-  (define cube_elements (list->u16vector (list-ref obj 4)))
-
-  (set! offset (* (length (cadr obj)) 4))
-
-  ; Load vbos
-  (set! vbo_all (CreateVBO32 gl:ARRAY_BUFFER gl:STATIC_DRAW vertices_a))
-  (set! ibo_cube_elements (CreateVBO16 gl:ELEMENT_ARRAY_BUFFER gl:STATIC_DRAW cube_elements))
+  (register_sphere 5)
+  (generate_maze geosphere)
 
   ; Load shaders
   (define vs (CreateShader gl:VERTEX_SHADER (LoadScript "geo/cube.v.glsl")))
+  (define ds (CreateShader gl:VERTEX_SHADER (LoadScript "geo/dark.v.glsl")))
   (define fs (CreateShader gl:FRAGMENT_SHADER (LoadScript "geo/cube.f.glsl")))
 
-  (set! program (CreateProgram (list vs fs)))
+  (set! pink-program (CreateProgram (list vs fs)))
+  (set! dark-program (CreateProgram (list ds fs)))
 
-  (set! attribute_vcoord (gl:GetAttribLocation program "v_coord"))
-  (set! attribute_vnormal (gl:GetAttribLocation program "v_normal"))
-  (set! uniform_mvp (gl:GetUniformLocation program "mvp"))
-  (set! uniform_inv_transp (gl:GetUniformLocation program "m_3x3_inv_transp"))
+  (set! attribute_vcoord (gl:GetAttribLocation pink-program "v_coord"))
+  (set! attribute_vnormal (gl:GetAttribLocation pink-program "v_normal"))
+  (set! uniform_mvp (gl:GetUniformLocation pink-program "mvp"))
+  (set! uniform_inv_transp (gl:GetUniformLocation pink-program "m_3x3_inv_transp"))
+
+  (set! attribute_vcoord (gl:GetAttribLocation dark-program "v_coord"))
+  (set! attribute_vnormal (gl:GetAttribLocation dark-program "v_normal"))
+  (set! uniform_mvp (gl:GetUniformLocation dark-program "mvp"))
+  (set! uniform_inv_transp (gl:GetUniformLocation dark-program "m_3x3_inv_transp"))
 
   (define endl "\n")
 
@@ -69,7 +104,7 @@
     "Opengl error => (" (gl:GetError) ")" endl
     "Vertex shader: " vs endl
     "Fragment shader: " fs endl
-    "Program: " program endl endl
+    "Program: " pink-program endl endl
 
     "VBOS: " endl
     "vbo_all" vbo_all endl
@@ -103,15 +138,15 @@
 
   (define angle (* (glut:Get glut:ELAPSED_TIME) (/ 1 1000) 45))
 
-  (set! t (hop (+ t 0.02)))
+  (set! t (hop (+ t 0.002)))
 
   (define axis_y (vec3 0 1 0))
 
   (set! anim (rotate (mat4 1.0) angle axis_y))
 
   (define view 
-    (look-at (vec3 0 2 10)
-             (vec3 0 0 -4)
+    (look-at (vec3 0 0 -3)
+             (vec3 0 0 0)
              (vec3 0 1 0)))
 
   (define projection
@@ -120,18 +155,23 @@
                  0.1
                  20.0))
 
-  (define model
-    (translate (mat4 1)
-               (vec3 (tween cubic-ease 'out 0 4 t)
-                     (tween bounce-ease 'out 4 1 t)
-                     0)))
+  ; (define model
+  ;   (translate (mat4 1)
+  ;              (vec3 (tween cubic-ease 'out 0 5 t)
+  ;                    (tween bounce-ease 'out 4 1 t)
+  ;                    0)))
+  (define model (translate (mat4 1) (vec3 0 0 0)))
 
   (set! vp (m* (m* (m* projection
                        view)
                    anim)
                model))
 
-  (gl:UseProgram program)
+  (gl:UseProgram pink-program)
+  (gl:UniformMatrix4fv uniform_mvp 1 gl:FALSE (mat-data vp))
+  (gl:UniformMatrix3fv uniform_inv_transp 1 gl:FALSE (mat-data (transpose (inverse (mat3 1)))))
+
+  (gl:UseProgram dark-program)
   (gl:UniformMatrix4fv uniform_mvp 1 gl:FALSE (mat-data vp))
   (gl:UniformMatrix3fv uniform_inv_transp 1 gl:FALSE (mat-data (transpose (inverse (mat3 1)))))
 
