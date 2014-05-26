@@ -13,7 +13,7 @@ struct lightSource
 
 lightSource light0 = lightSource(
     vec4(-1.0, 1.0, 1.0, 1.0),
-    vec4(1.0, 1.0, 1.0, 1.0),
+    vec4(1.5, 1.5, 1.5, 1.0),
     1.0, 0.0, 0.0
 );
  
@@ -22,7 +22,7 @@ struct material
   vec4 diffuse;
 };
 
-material mymaterial = material(vec4(0.2, 0.3, 0.2, 1.0));
+material mymaterial = material(vec4(0.5, 0.3, 0.6, 1.0));
  
 void main(void)
 {
@@ -37,5 +37,6 @@ void main(void)
       max(0.5, dot(normalDirection, lightDirection));
  
   color = vec4(diffuseReflection * 0.75, 1.0);
-  gl_Position = mvp * v_coord;
+
+  gl_Position = mvp * (v_coord * vec4(vec3(1.05), 1.0));
 }

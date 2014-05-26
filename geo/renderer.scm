@@ -46,6 +46,6 @@
   (gl:Clear (+ gl:COLOR_BUFFER_BIT gl:DEPTH_BUFFER_BIT))
 
   (RenderObject pink-program vbo_all ibo_cube_elements gl:TRIANGLES 3)
-  (RenderObject dark-program vbo_all ibo_maze_elements gl:LINES 2)
+  (RenderObject dark-program vbo_all ibo_maze_elements gl:TRIANGLES 3)
 
   (glut:SwapBuffers))

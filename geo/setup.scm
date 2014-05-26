@@ -9,6 +9,9 @@
 (define screen_width 800)
 (define screen_height 600)
 
+(define angle_y 0)
+(define angle_x 0)
+
 (require "common/opengl")
 (require "common/vector")
 (require "common/loaders/obj")
@@ -36,7 +39,7 @@
 
 (define (register_sphere tessellation)
   (let* ((geo (tessellate (make-geometry 1) tessellation))
-         (verts (list->f32vector (concatenate (map f32vector->list (car geo)))))
+         (verts (list->f32vector (append (concatenate (map f32vector->list (car geo))) (list 0 0 0))))
          (faces (list->u16vector (concatenate (cadr geo))))
          )
 
@@ -58,16 +61,21 @@
          (path (kruskal nodes m-edges))
          (filtered-path (map (lambda (x) (cdr x)) path))
          (maze (subtract edges filtered-path))
-         (base (map (lambda (maze-edge) (hash-table-ref backup maze-edge)) maze))
+         (base (map (lambda (maze-edge) (append (hash-table-ref backup maze-edge) (list (length vertices)))) maze))
          (faces (list->u16vector (concatenate base))))
 
     (print "Edges : " (length edges))
     (print "Maze : "  (length maze))
-    (print "Maze 2 " (concatenate maze))
 
     (set! ibo_maze_elements (CreateVBO16 gl:ELEMENT_ARRAY_BUFFER gl:STATIC_DRAW faces))
     ))
 
+(define tessellation 0)
+
+(define (generate tessellation)
+  (print "Regen")
+  (register_sphere tessellation)
+  (generate_maze geosphere))
 
 
 (define (InitResources)
@@ -77,8 +85,7 @@
   (gl:Disable gl:CULL_FACE)
   (gl:LineWidth 2)
 
-  (register_sphere 5)
-  (generate_maze geosphere)
+  (generate tessellation)
 
   ; Load shaders
   (define vs (CreateShader gl:VERTEX_SHADER (LoadScript "geo/cube.v.glsl")))
@@ -136,13 +143,18 @@
   ; ??? like in text file
   (define hop (flow 0 1))
 
-  (define angle (* (glut:Get glut:ELAPSED_TIME) (/ 1 1000) 45))
+  ;(define angle (* (glut:Get glut:ELAPSED_TIME) (/ 1 1000) 45))
+
 
   (set! t (hop (+ t 0.002)))
 
   (define axis_y (vec3 0 1 0))
 
-  (set! anim (rotate (mat4 1.0) angle axis_y))
+  (set! anim (mat4 1))
+
+  (set! axis_x (m* anim (vec3 1 0 0)))
+  (set! anim (rotate anim angle_x axis_x))
+  (set! anim (rotate anim angle_y axis_y))
 
   (define view 
     (look-at (vec3 0 0 -3)

@@ -7,7 +7,7 @@
 ; (5 "A" "B") is an edge of weight 5 connecting
 ; the node A and B
 (define (sort-nodes nodes)
-  (sort nodes (lambda (x y)
+  (sort! nodes (lambda (x y)
     (< (car x) (car y)))))
 
 ; Fill the forest of nodes in our DisjointSet
