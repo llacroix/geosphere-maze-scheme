@@ -4,7 +4,7 @@
 
 
 (define folder (if (equal? (command-line-arguments) '())
-                 "defaults"
+                 "geo"
                  (car (command-line-arguments))))
 
 (require (string-append folder "/" "setup"))

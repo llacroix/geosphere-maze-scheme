@@ -1,6 +1,6 @@
 (use srfi-69)
 
-(include "common/base")
+(include "common/shapes")
 (include "common/prim")
 (include "common/kruskal")
 
