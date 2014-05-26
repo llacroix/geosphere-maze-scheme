@@ -88,9 +88,9 @@
   (generate tessellation)
 
   ; Load shaders
-  (define vs (CreateShader gl:VERTEX_SHADER (LoadScript "geo/cube.v.glsl")))
-  (define ds (CreateShader gl:VERTEX_SHADER (LoadScript "geo/dark.v.glsl")))
-  (define fs (CreateShader gl:FRAGMENT_SHADER (LoadScript "geo/cube.f.glsl")))
+  (define vs (CreateShader gl:VERTEX_SHADER (LoadScript "shaders/sphere.v.glsl")))
+  (define ds (CreateShader gl:VERTEX_SHADER (LoadScript "shaders/walls.v.glsl")))
+  (define fs (CreateShader gl:FRAGMENT_SHADER (LoadScript "shaders/shape.f.glsl")))
 
   (set! pink-program (CreateProgram (list vs fs)))
   (set! dark-program (CreateProgram (list ds fs)))
